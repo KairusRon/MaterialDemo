@@ -1,5 +1,6 @@
 package top.aixcert.materialdemo.activity;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -27,6 +28,7 @@ import top.aixcert.materialdemo.utils.RateLimitInterceptor;
 public class HomeActivity extends AppCompatActivity {
 
     private static final String TAG = "HomeActivity";
+    String hitokoto = null;
     private TextView tv_hitokoto;
     private Button hitokoto_refresh;
     int maxRequestsPerSecond = 1;   // 每秒最多请求次数
@@ -36,7 +38,7 @@ public class HomeActivity extends AppCompatActivity {
     private static final int MSG_UPDATE_HITOKOTO = 1;
     private final Handler handler = new Handler(msg -> {
         if (msg.what == MSG_UPDATE_HITOKOTO) {
-            String hitokoto = (String) msg.obj;
+            hitokoto = (String) msg.obj;
             updateHitokoto(hitokoto);
         }
         return true;
@@ -61,9 +63,14 @@ public class HomeActivity extends AppCompatActivity {
         hitokoto_refresh = findViewById(R.id.hitokoto_refresh);
 
 
+        // 读取上一次显示的句子
+        SharedPreferences sharedPreferences = getSharedPreferences("hitokoto", MODE_PRIVATE);
+        hitokoto = sharedPreferences.getString("hitokoto", "");
+        updateHitokoto(hitokoto);
         hitokoto_refresh.setOnClickListener(view -> {
             fetchHitokoto();
         });
+
     }
 
     private void fetchHitokoto() {
@@ -98,7 +105,16 @@ public class HomeActivity extends AppCompatActivity {
     // 更新UI
     private void updateHitokoto(String hitokoto) {
         tv_hitokoto.setText(hitokoto);
+
     }
 
-
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // 将最后显示的句子保存起来
+        SharedPreferences sharedPreferences = getSharedPreferences("hitokoto", MODE_PRIVATE);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+        edit.putString("hitokoto", hitokoto);
+        edit.commit();
+    }
 }
