@@ -1,17 +1,21 @@
 package top.aixcert.materialdemo.activity;
 
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 
+import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -23,14 +27,24 @@ import okhttp3.Request;
 import okhttp3.Response;
 import top.aixcert.materialdemo.R;
 import top.aixcert.materialdemo.data.HitokotoModel;
+import top.aixcert.materialdemo.data.ImageModel;
+import top.aixcert.materialdemo.utils.Net;
 import top.aixcert.materialdemo.utils.RateLimitInterceptor;
 
 public class HomeActivity extends AppCompatActivity {
 
     private static final String TAG = "HomeActivity";
     String hitokoto = null;
+
+    // 文字部分控件
     private TextView tv_hitokoto;
     private Button hitokoto_refresh;
+    private Button hitokoto_copy;
+
+    //图片部分控件
+    private ImageView iv_image;
+    private Button img_refresh;
+    private Button img_save;
     int maxRequestsPerSecond = 1;   // 每秒最多请求次数
     int intervalSeconds = 3;    // 请求间隔时间
 
@@ -45,9 +59,7 @@ public class HomeActivity extends AppCompatActivity {
     });
 
 
-    private final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-            .addInterceptor(new RateLimitInterceptor(maxRequestsPerSecond, intervalSeconds))
-            .build();
+    private final OkHttpClient okHttpClient = new OkHttpClient.Builder().addInterceptor(new RateLimitInterceptor(maxRequestsPerSecond, intervalSeconds)).build();
 
 
     @Override
@@ -56,12 +68,15 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
+
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
 
         tv_hitokoto = findViewById(R.id.tv_hitokoto);
         hitokoto_refresh = findViewById(R.id.hitokoto_refresh);
+        img_refresh = findViewById(R.id.img_refresh);
 
+        iv_image = findViewById(R.id.iv_image);
 
         // 读取上一次显示的句子
         SharedPreferences sharedPreferences = getSharedPreferences("hitokoto", MODE_PRIVATE);
@@ -71,8 +86,13 @@ public class HomeActivity extends AppCompatActivity {
             fetchHitokoto();
         });
 
+        img_refresh.setOnClickListener(view -> {
+            fetchImage();
+        });
+
     }
 
+    // 获取一言
     private void fetchHitokoto() {
         String hitokotoUrl = "https://v1.hitokoto.cn/";
         Request request = new Request.Builder().url(hitokotoUrl).get().build();
@@ -108,13 +128,51 @@ public class HomeActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        // 将最后显示的句子保存起来
-        SharedPreferences sharedPreferences = getSharedPreferences("hitokoto", MODE_PRIVATE);
-        SharedPreferences.Editor edit = sharedPreferences.edit();
-        edit.putString("hitokoto", hitokoto);
-        edit.commit();
+    // 获取图片
+    private void fetchImage() {
+        Log.d(TAG, "fetchImage: 开始获取图片");
+        // JSON文件的URL
+        String imageUrl = "https://t.mwm.moe/ycy/?json";
+        Request.Builder url = new Request.Builder().url(imageUrl);
+        new OkHttpClient.Builder().build().newCall(url.build()).enqueue(new Callback() {
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+
+                if (response.isSuccessful()){
+                    String json = response.body().string();
+                    ImageModel imageModel = new Gson().fromJson(json, ImageModel.class);
+
+                    // 获取图片链接
+                    String imageUrl = imageModel.getUrl();
+                    Log.d(TAG, "onResponse: " + imageUrl);
+
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            // 显示图片
+                            Glide.with(HomeActivity.this).load(imageUrl).into(iv_image);
+                            Log.d(TAG, "run: 图片加载成功：" +imageUrl);
+                        }
+                    });
+
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(HomeActivity.this, "获取图片失败", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
     }
 }
+
+
+

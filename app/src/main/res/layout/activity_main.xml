@@ -75,13 +75,12 @@
 
 
             <ImageView
-                android:layout_marginBottom="8dp"
                 android:id="@+id/iv_image"
                 android:layout_width="match_parent"
                 android:layout_height="194dp"
+                android:layout_marginBottom="8dp"
                 android:scaleType="centerCrop"
                 android:src="@mipmap/test" />
-
 
             <LinearLayout
                 android:layout_margin="8dp"
