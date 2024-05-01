@@ -27,16 +27,12 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleRelease
 
-       - name: Upload APK to Telegram
-        uses: appleboy/telegram-upload@v2
-        with:
-          files: ./app/build/outputs/apk/release/app-release.apk
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
-          caption: |
-            又又又更新代码了，真是勤劳的一天
-            
-            GitHub New CI
+      - name: Send message to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{secrets.CHAT_ID}}
+          COMMIT_MESSAGE: |+
+            GitHub New CI\
             
             `${{ github.event.head_commit.message }}`
             
