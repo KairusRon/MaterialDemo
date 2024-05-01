@@ -1,7 +1,6 @@
 package top.aixcert.materialdemo.activity;
 
 import android.content.SharedPreferences;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -28,7 +27,6 @@ import okhttp3.Response;
 import top.aixcert.materialdemo.R;
 import top.aixcert.materialdemo.data.HitokotoModel;
 import top.aixcert.materialdemo.data.ImageModel;
-import top.aixcert.materialdemo.utils.Net;
 import top.aixcert.materialdemo.utils.RateLimitInterceptor;
 
 public class HomeActivity extends AppCompatActivity {
